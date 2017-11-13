@@ -37,9 +37,17 @@ function fastbootExpressMiddleware(distPath, options) {
           let headers = result.headers;
           let statusMessage = result.error ? 'NOT OK ' : 'OK ';
 
+          let cookies = {};
           for (var pair of headers.entries()) {
-            res.set(pair[0], pair[1]);
+            if (pair[0].match(/^set-cookie$/i)) {
+              let cookieName = pair[1].match(/.+?(?=\=)/)[0];
+              cookies[cookieName] = pair[1];
+            } else {
+              res.set(pair[0], pair[1]);
+            }
           }
+
+          res.set('Set-Cookie', Object.keys(cookies).map((k) => cookies[k]));
 
           if (result.error) {
             log("RESILIENT MODE CAUGHT:", result.error.stack);
