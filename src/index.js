@@ -36,9 +36,19 @@ function fastbootExpressMiddleware(distPath, options) {
         .then(body => {
           let headers = result.headers;
           let statusMessage = result.error ? 'NOT OK ' : 'OK ';
+          let cookies = new Map();
 
-          for (var pair of headers.entries()) {
-            res.set(pair[0], pair[1]);
+          for (let [name, value] of headers.entries()) {
+            if (name.toLowerCase() === 'set-cookie') {
+              let cookieName = value.split('=')[0];
+              cookies.set(cookieName, value);
+            } else {
+              res.set(name, value);
+            }
+          }
+
+          if (cookies.length > 0) {
+            res.set('Set-Cookie', cookies.values());
           }
 
           if (result.error) {
